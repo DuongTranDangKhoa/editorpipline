@@ -54,29 +54,33 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
   padding: 4px 14px; border-radius: 99px;
   border: none; background: none;
   font-family: var(--font); font-size: 11px; font-weight: 500;
-  color: var(--text2); cursor: pointer; transition: all .18s;
+  color: var(--text2); cursor: pointer; transition: all .2s ease;
 }
-.rpill.active { background: var(--accent); color: #0e0e10; }
+.rpill:hover:not(.active) { color: var(--text); background: var(--bg4); }
+.rpill:active { transform: scale(0.96); }
+.rpill.active { background: var(--accent); color: #0e0e10; transform: scale(1.05); font-weight: 600; box-shadow: 0 4px 12px rgba(200,242,100,.2); }
 
 .filter-row { display: flex; gap: 6px; margin-left: auto; align-items: center; }
 .filter-btn {
   padding: 4px 12px; border-radius: 99px;
   border: 1px solid var(--border); background: none;
   font-family: var(--font); font-size: 11px; font-weight: 500;
-  color: var(--text2); cursor: pointer; transition: all .15s;
+  color: var(--text2); cursor: pointer; transition: all .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.filter-btn:hover { border-color: var(--border2); color: var(--text); }
-.filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,242,100,.06); }
+.filter-btn:hover { border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+.filter-btn:active { transform: scale(0.95); }
+.filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,242,100,.06); transform: scale(1.05); }
 
 .btn {
   padding: 6px 14px; border-radius: var(--r2);
   border: 1px solid var(--border2); background: var(--bg3);
   font-family: var(--font); font-size: 12px; font-weight: 500;
-  color: var(--text); cursor: pointer; transition: all .15s;
+  color: var(--text); cursor: pointer; transition: all .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.btn:hover { background: var(--bg4); }
+.btn:hover { background: var(--bg4); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.btn:active { transform: translateY(1px) scale(0.98); box-shadow: none; }
 .btn-accent { background: var(--accent); color: #0e0e10; border-color: var(--accent); font-weight: 600; }
-.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); box-shadow: 0 4px 16px rgba(200,242,100,.25); }
 
 .legend { display: flex; gap: 12px; align-items: center; }
 .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
@@ -142,6 +146,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
   border-radius: var(--r2);
   outline: 1.5px dashed rgba(200,242,100,.3);
   outline-offset: -4px;
+  animation: pulseZone 1s infinite alternate;
+}
+@keyframes pulseZone {
+  from { background: rgba(200,242,100,.02); outline-color: rgba(200,242,100,.2); }
+  to { background: rgba(200,242,100,.06); outline-color: rgba(200,242,100,.5); }
 }
 
 /* ── TASK CARD ── */
@@ -151,11 +160,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
   border-radius: var(--r2);
   padding: 11px 12px;
   cursor: grab;
-  transition: border-color .15s, transform .1s, box-shadow .1s;
+  transition: all .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   user-select: none;
 }
-.task:hover { border-color: var(--border2); }
+.task:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,.3); z-index: 10; }
 .task.dragging {
   opacity: .4;
   cursor: grabbing;
@@ -205,12 +214,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
 .cp-bar-text { font-size: 10px; color: var(--text3); }
 .cp-bar-val { font-size: 10px; font-family: var(--mono); color: var(--text2); }
 .cp-bar-bg { height: 3px; background: var(--bg5); border-radius: 2px; }
-.cp-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+.cp-bar-fill { height: 100%; border-radius: 2px; transition: width .4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .4s ease; }
 
 /* flag dot on card */
 .flag-dot {
   position: absolute; top: 8px; right: 8px;
   width: 7px; height: 7px; border-radius: 50%;
+}
+.flag-dot.pulse { animation: pulseRed 1.5s infinite; }
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(242,82,82, 0.6); }
+  70% { box-shadow: 0 0 0 5px rgba(242,82,82, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(242,82,82, 0); }
 }
 
 /* add task */
@@ -227,6 +242,52 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
 }
 .add-task-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,242,100,.04); }
 
+/* ── CONTEXT MENU ── */
+.ctx-menu {
+  position: absolute; top: 28px; right: 8px; z-index: 50;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 130px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  animation: ctxPop .15s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes ctxPop {
+  from { opacity: 0; transform: scale(.9) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+.ctx-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  color: var(--text2); transition: all .12s;
+}
+.ctx-item:hover { background: var(--bg5); color: var(--text); }
+.ctx-item.danger { color: var(--red); }
+.ctx-item.danger:hover { background: rgba(242,82,82,.1); }
+.ctx-icon { font-size: 13px; }
+
+/* ── DELETE CONFIRM ── */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+}
+.confirm-overlay.open { display: flex; animation: fadeIn .18s; }
+.confirm-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px; padding: 28px 32px;
+  width: 340px; max-width: 95vw;
+  text-align: center;
+  animation: modalSlideUp .3s cubic-bezier(.22,.68,0,1.2);
+}
+.confirm-icon { font-size: 32px; margin-bottom: 12px; }
+.confirm-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.confirm-sub { font-size: 12px; color: var(--text2); margin-bottom: 22px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
 /* ── MODAL ── */
 .modal-overlay {
   position: fixed; inset: 0;
@@ -235,8 +296,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
   z-index: 100;
   display: none; align-items: center; justify-content: center;
 }
-.modal-overlay.open { display: flex; animation: fadeIn .18s ease; }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-overlay.open { display: flex; animation: fadeIn .25s ease forwards; }
+@keyframes fadeIn { from{opacity:0; backdrop-filter: blur(0px);} to{opacity:1; backdrop-filter: blur(4px);} }
 
 .modal {
   background: var(--bg2);
@@ -245,6 +306,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); heig
   width: 520px; max-width: 95vw;
   max-height: 85vh; overflow-y: auto;
   padding: 24px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+.modal-overlay.open .modal { animation: modalSlideUp .35s cubic-bezier(.22,.68,0,1.2) forwards; }
+.modal-overlay.open .new-modal { animation: modalSlideUp .35s cubic-bezier(.22,.68,0,1.2) forwards; }
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .modal::-webkit-scrollbar { width: 3px; }
 .modal::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
@@ -322,8 +391,18 @@ textarea.modal-input { min-height: 70px; resize: vertical; line-height: 1.6; }
   padding: 0 20px; gap: 24px;
 }
 .stat-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
-.stat-val { font-family: var(--mono); font-weight: 500; color: var(--text); }
+.stat-val { font-family: var(--mono); font-weight: 500; color: var(--text); transition: color .3s; }
 .stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* --- STAGGER ANIMATIONS -- */
+.animate-stagger {
+  opacity: 0;
+  animation: staggerFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes staggerFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── LOGIN PAGE ── */
 #login-page {
@@ -630,7 +709,87 @@ textarea.modal-input { min-height: 70px; resize: vertical; line-height: 1.6; }
   </div>
 </div>
 
-<!-- NEW TASK MODAL -->
+<!-- EDIT TASK MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="closeEditOnOverlay(event)">
+  <div class="new-modal" style="width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Chỉnh sửa task</div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Tên video / task</div>
+      <input class="modal-input" id="edit-title" placeholder="VD: EP.50 · Drama — Tập cuối">
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Giao cho</div>
+      <select class="modal-input" id="edit-editor" style="cursor:pointer">
+        <option value="ha">Hà Nguyễn</option>
+        <option value="tuan">Tuấn Trần</option>
+        <option value="minh">Minh Lê</option>
+        <option value="duy">Duy Hoàng</option>
+        <option value="linh">Linh Phạm</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="modal-section">
+        <div class="modal-label">Format</div>
+        <select class="modal-input" id="edit-format" style="cursor:pointer">
+          <option>Drama</option>
+          <option>Vlog</option>
+          <option>Tutorial</option>
+          <option>Short</option>
+        </select>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">Deadline</div>
+        <input class="modal-input" id="edit-deadline" type="text" placeholder="VD: T6 02/05">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div>
+        <div class="modal-label">Trễ hạn</div>
+        <select class="modal-input" id="edit-urgent" style="cursor:pointer">
+          <option value="false">Không</option>
+          <option value="true">Trễ hạn</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Sắp hạn</div>
+        <select class="modal-input" id="edit-soon" style="cursor:pointer">
+          <option value="false">Không</option>
+          <option value="true">Sắp hạn</option>
+        </select>
+      </div>
+      <div>
+        <div class="modal-label">Bước</div>
+        <select class="modal-input" id="edit-step" style="cursor:pointer">
+          <option value="receive">Nhận task</option>
+          <option value="rough">Cắt thô</option>
+          <option value="post">Hậu kỳ</option>
+          <option value="qc">QC &amp; Xuất</option>
+          <option value="upload">Upload &amp; Review</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeEditModal()">Huỷ</button>
+      <button class="btn btn-accent" onclick="saveEditTask()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Xóa task này?</div>
+    <div class="confirm-sub" id="confirm-task-name">Tên task</div>
+    <div class="confirm-actions">
+      <button class="btn" onclick="cancelDelete()" style="flex:1">Huỷ</button>
+      <button class="btn" onclick="confirmDelete()" style="flex:1;background:var(--red);border-color:var(--red);color:#fff;font-weight:600">Xóa</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="new-modal" onclick="closeNewOnOverlay(event)">
   <div class="new-modal">
     <div class="modal-header">
@@ -888,11 +1047,12 @@ function render() {
     return true;
   });
 
-  STEPS.forEach(step => {
+  STEPS.forEach((step, colIndex) => {
     const stepTasks = visibleTasks.filter(t => t.step === step.id);
     const col = document.createElement('div');
-    col.className = 'col';
+    col.className = 'col animate-stagger';
     col.dataset.step = step.id;
+    col.style.animationDelay = `${colIndex * 0.05}s`;
 
     // Head
     col.innerHTML = `
@@ -914,8 +1074,11 @@ function render() {
     cardsEl.className = 'col-cards';
     cardsEl.dataset.step = step.id;
 
-    stepTasks.forEach(task => {
-      cardsEl.appendChild(makeCard(task, step));
+    stepTasks.forEach((task, taskIndex) => {
+      const cardEl = makeCard(task, step);
+      cardEl.classList.add('animate-stagger');
+      cardEl.style.animationDelay = `${(colIndex * 0.05) + (taskIndex * 0.04) + 0.15}s`;
+      cardsEl.appendChild(cardEl);
     });
 
     setupDropZone(cardsEl);
@@ -949,16 +1112,18 @@ function makeCard(task, step) {
 
   // flag
   let flagColor = '#3ecfb2';
-  if (task.urgent) flagColor = '#f25252';
-  else if (task.soon) flagColor = '#f5a623';
+  let pulseClass = '';
+  if (task.urgent) { flagColor = '#f25252'; pulseClass = 'pulse'; }
+  else if (task.soon) { flagColor = '#f5a623'; }
 
   const formatTag = { Drama:'tag-purple', Vlog:'tag-blue', Tutorial:'tag-teal', Short:'tag-pink' }[task.format] || 'tag-gray';
   const deadlineClass = task.urgent ? 'urgent' : task.soon ? 'soon' : '';
 
   card.innerHTML = `
-    <div class="flag-dot" style="background:${flagColor}"></div>
+    <div class="flag-dot ${pulseClass}" style="background:${flagColor}"></div>
     <div class="task-top">
       <div class="task-title">${task.title}</div>
+      ${currentRole === 'leader' ? `<button class="task-menu" data-id="${task.id}" onclick="toggleCtxMenu(event,'${task.id}')">⋯</button>` : ''}
     </div>
     <div class="task-meta">
       <span class="tag ${formatTag}">${task.format}</span>
@@ -991,8 +1156,11 @@ function makeCard(task, step) {
     document.querySelectorAll('.col-cards').forEach(z => z.classList.remove('drag-over'));
   });
 
-  // click → open detail
-  card.addEventListener('click', () => openDetail(task.id));
+  // click → open detail (but not if clicking the ⋯ button)
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.task-menu') || e.target.closest('.ctx-menu')) return;
+    openDetail(task.id);
+  });
 
   return card;
 }
@@ -1014,8 +1182,7 @@ function setupDropZone(el) {
     const task = tasks.find(t => t.id === draggingId);
     if (task && task.step !== newStep) {
       task.step = newStep;
-      // reset cp when moved back
-      if (newStep !== 'upload') task.cp = [false,false,false,false];
+      // SOP checkboxes are PRESERVED when moving between steps
     }
     draggingId = null;
     render();
@@ -1087,6 +1254,138 @@ function saveDetail() {
 
 function closeDetail() { document.getElementById('detail-modal').classList.remove('open'); }
 function closeDetailOnOverlay(e) { if (e.target.id === 'detail-modal') closeDetail(); }
+
+/* ═══════════════════════════════════════════
+   CONTEXT MENU (⋯)
+═══════════════════════════════════════════ */
+let openCtxId = null;
+
+function toggleCtxMenu(e, taskId) {
+  e.stopPropagation();
+  // Remove any existing context menu
+  closeAllCtx();
+  if (openCtxId === taskId) { openCtxId = null; return; }
+
+  openCtxId = taskId;
+  const btn = e.currentTarget;
+  const card = btn.closest('.task');
+
+  const menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.id = 'active-ctx';
+  menu.innerHTML = `
+    <div class="ctx-item" onclick="openEditTask('${taskId}')">
+      <span class="ctx-icon">✏️</span> Chỉnh sửa
+    </div>
+    <div class="ctx-item danger" onclick="promptDelete('${taskId}')">
+      <span class="ctx-icon">🗑️</span> Xóa task
+    </div>
+  `;
+  card.appendChild(menu);
+}
+
+function closeAllCtx() {
+  openCtxId = null;
+  const m = document.getElementById('active-ctx');
+  if (m) m.remove();
+}
+
+// Close ctx on outside click
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ctx-menu') && !e.target.closest('.task-menu')) closeAllCtx();
+});
+
+/* ═══════════════════════════════════════════
+   EDIT TASK
+═══════════════════════════════════════════ */
+let editingTaskId = null;
+
+function openEditTask(id) {
+  closeAllCtx();
+  editingTaskId = id;
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  document.getElementById('edit-title').value    = task.title;
+  document.getElementById('edit-editor').value   = task.editor;
+  document.getElementById('edit-format').value   = task.format;
+  document.getElementById('edit-deadline').value = task.deadline;
+  document.getElementById('edit-urgent').value   = String(task.urgent);
+  document.getElementById('edit-soon').value     = String(task.soon);
+  document.getElementById('edit-step').value     = task.step;
+
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function saveEditTask() {
+  const task = tasks.find(t => t.id === editingTaskId);
+  if (!task) return;
+
+  const newTitle = document.getElementById('edit-title').value.trim();
+  if (!newTitle) { document.getElementById('edit-title').focus(); return; }
+
+  task.title    = newTitle;
+  task.editor   = document.getElementById('edit-editor').value;
+  task.format   = document.getElementById('edit-format').value;
+  task.deadline = document.getElementById('edit-deadline').value || task.deadline;
+  task.urgent   = document.getElementById('edit-urgent').value === 'true';
+  task.soon     = document.getElementById('edit-soon').value === 'true';
+  task.step     = document.getElementById('edit-step').value;
+
+  // If both urgent + soon set, prioritize urgent
+  if (task.urgent) task.soon = false;
+
+  closeEditModal();
+  render();
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editingTaskId = null;
+}
+function closeEditOnOverlay(e) { if (e.target.id === 'edit-modal') closeEditModal(); }
+
+/* ═══════════════════════════════════════════
+   DELETE TASK
+═══════════════════════════════════════════ */
+let deletingTaskId = null;
+
+function promptDelete(id) {
+  closeAllCtx();
+  deletingTaskId = id;
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  document.getElementById('confirm-task-name').textContent =
+    `"${task.title}" sẽ bị xóa vĩnh viễn và không thể khôi phục.`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function confirmDelete() {
+  if (!deletingTaskId) return;
+  tasks = tasks.filter(t => t.id !== deletingTaskId);
+  // If the deleted task was open in detail modal, close it
+  if (openTaskId === deletingTaskId) closeDetail();
+  deletingTaskId = null;
+  document.getElementById('confirm-overlay').classList.remove('open');
+  render();
+}
+
+function cancelDelete() {
+  deletingTaskId = null;
+  document.getElementById('confirm-overlay').classList.remove('open');
+}
+
+// ESC key closes modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeAllCtx();
+    closeEditModal();
+    cancelDelete();
+    closeDetail();
+    closeNewModal();
+  }
+});
 
 /* ═══════════════════════════════════════════
    NEW TASK MODAL

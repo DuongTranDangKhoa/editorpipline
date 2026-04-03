@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e10;
+  --bg2: #141416;
+  --bg3: #1a1a1d;
+  --bg4: #222226;
+  --bg5: #2a2a2e;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #444;
+  --accent: #c8f264;
+  --accent2: #a8d94a;
+  --teal: #3ecfb2;
+  --purple: #9b87f5;
+  --amber: #f5a623;
+  --red: #f25252;
+  --blue: #5ba4f5;
+  --pink: #f589c8;
+  --font: 'Sora', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --r: 10px;
+  --r2: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 52px; flex-shrink: 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 16px;
+}
+.logo { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: .1em; margin-right: 4px; }
+.divider { width: 1px; height: 20px; background: var(--border2); }
+.topbar-title { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.role-pill {
+  display: flex; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 99px;
+  padding: 3px; gap: 2px; margin-left: 8px;
+}
+.rpill {
+  padding: 4px 14px; border-radius: 99px;
+  border: none; background: none;
+  font-family: var(--font); font-size: 11px; font-weight: 500;
+  color: var(--text2); cursor: pointer; transition: all .18s;
+}
+.rpill.active { background: var(--accent); color: #0e0e10; }
+
+.filter-row { display: flex; gap: 6px; margin-left: auto; align-items: center; }
+.filter-btn {
+  padding: 4px 12px; border-radius: 99px;
+  border: 1px solid var(--border); background: none;
+  font-family: var(--font); font-size: 11px; font-weight: 500;
+  color: var(--text2); cursor: pointer; transition: all .15s;
+}
+.filter-btn:hover { border-color: var(--border2); color: var(--text); }
+.filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,242,100,.06); }
+
+.btn {
+  padding: 6px 14px; border-radius: var(--r2);
+  border: 1px solid var(--border2); background: var(--bg3);
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  color: var(--text); cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: var(--bg4); }
+.btn-accent { background: var(--accent); color: #0e0e10; border-color: var(--accent); font-weight: 600; }
+.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+
+.legend { display: flex; gap: 12px; align-items: center; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── BOARD ── */
+.board-wrap {
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  padding: 16px 20px 20px;
+  display: flex; gap: 12px;
+}
+.board-wrap::-webkit-scrollbar { height: 4px; }
+.board-wrap::-webkit-scrollbar-track { background: transparent; }
+.board-wrap::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* ── COLUMN ── */
+.col {
+  width: 260px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.col-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.col-indicator { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+.col-name { font-size: 12px; font-weight: 600; letter-spacing: -.01em; flex: 1; }
+.col-count {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--bg4); color: var(--text2);
+  padding: 2px 7px; border-radius: 99px;
+}
+
+.col-sop {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  flex-shrink: 0;
+}
+.sop-title { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 5px; }
+.sop-checks { display: flex; flex-direction: column; gap: 3px; }
+.sop-check { font-size: 10px; color: var(--text2); display: flex; gap: 5px; align-items: flex-start; line-height: 1.4; }
+.sop-check::before { content: '·'; color: var(--text3); flex-shrink: 0; }
+
+/* ── CARDS LIST ── */
+.col-cards {
+  flex: 1; overflow-y: auto; padding: 10px 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  min-height: 80px;
+}
+.col-cards::-webkit-scrollbar { width: 3px; }
+.col-cards::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* drop zone highlight */
+.col-cards.drag-over {
+  background: rgba(200,242,100,.04);
+  border-radius: var(--r2);
+  outline: 1.5px dashed rgba(200,242,100,.3);
+  outline-offset: -4px;
+}
+
+/* ── TASK CARD ── */
+.task {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 11px 12px;
+  cursor: grab;
+  transition: border-color .15s, transform .1s, box-shadow .1s;
+  position: relative;
+  user-select: none;
+}
+.task:hover { border-color: var(--border2); }
+.task.dragging {
+  opacity: .4;
+  cursor: grabbing;
+}
+.task.drag-ghost {
+  opacity: 1 !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  transform: rotate(1.5deg) scale(1.02);
+  cursor: grabbing;
+}
+
+.task-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 7px; }
+.task-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; flex: 1; }
+.task-menu { font-size: 14px; color: var(--text3); cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+.task-menu:hover { color: var(--text2); }
+
+.task-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 99px;
+  font-size: 10px; font-weight: 500;
+}
+.tag-teal   { background: rgba(62,207,178,.12);  color: var(--teal); }
+.tag-purple { background: rgba(155,135,245,.12); color: var(--purple); }
+.tag-amber  { background: rgba(245,166,35,.12);  color: var(--amber); }
+.tag-red    { background: rgba(242,82,82,.12);   color: var(--red); }
+.tag-blue   { background: rgba(91,164,245,.12);  color: var(--blue); }
+.tag-accent { background: rgba(200,242,100,.1);  color: var(--accent); }
+.tag-pink   { background: rgba(245,137,200,.12); color: var(--pink); }
+.tag-gray   { background: rgba(255,255,255,.06); color: var(--text2); }
+
+.task-footer { display: flex; align-items: center; gap: 6px; }
+.task-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; flex-shrink: 0;
+}
+.task-editor { font-size: 11px; color: var(--text2); flex: 1; }
+.task-deadline { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.task-deadline.urgent { color: var(--red); }
+.task-deadline.soon { color: var(--amber); }
+
+/* checkpoint mini bar */
+.cp-bar { margin-top: 8px; }
+.cp-bar-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.cp-bar-text { font-size: 10px; color: var(--text3); }
+.cp-bar-val { font-size: 10px; font-family: var(--mono); color: var(--text2); }
+.cp-bar-bg { height: 3px; background: var(--bg5); border-radius: 2px; }
+.cp-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+
+/* flag dot on card */
+.flag-dot {
+  position: absolute; top: 8px; right: 8px;
+  width: 7px; height: 7px; border-radius: 50%;
+}
+
+/* add task */
+.add-task-btn {
+  margin: 0 10px 10px;
+  padding: 7px;
+  border: 1px dashed var(--border2);
+  border-radius: var(--r2);
+  background: none;
+  color: var(--text3);
+  font-family: var(--font); font-size: 11px;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.add-task-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,242,100,.04); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; animation: fadeIn .18s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 520px; max-width: 95vw;
+  max-height: 85vh; overflow-y: auto;
+  padding: 24px;
+}
+.modal::-webkit-scrollbar { width: 3px; }
+.modal::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.modal-close { background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.modal-close:hover { color: var(--text); background: var(--bg3); }
+
+.modal-section { margin-bottom: 18px; }
+.modal-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin-bottom: 8px; }
+
+.modal-input {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 9px 12px; color: var(--text);
+  font-family: var(--font); font-size: 13px; outline: none;
+  transition: border-color .15s;
+}
+.modal-input:focus { border-color: var(--border2); }
+
+.sop-checklist { display: flex; flex-direction: column; gap: 8px; }
+.sop-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r2);
+  cursor: pointer; transition: border-color .15s;
+}
+.sop-item:hover { border-color: var(--border2); }
+.sop-item.done { background: rgba(200,242,100,.04); border-color: rgba(200,242,100,.15); }
+.sop-checkbox {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px; transition: all .15s;
+}
+.sop-item.done .sop-checkbox { background: var(--accent); border-color: var(--accent); color: #0e0e10; font-size: 10px; font-weight: 700; }
+.sop-item.done .sop-checkbox::after { content: '✓'; }
+.sop-text { font-size: 12px; color: var(--text2); line-height: 1.5; flex: 1; }
+.sop-item.done .sop-text { color: var(--text3); text-decoration: line-through; }
+.sop-mindset { font-size: 10px; color: var(--accent); margin-top: 3px; line-height: 1.4; }
+.sop-item.done .sop-mindset { color: var(--text3); }
+
+.prediction-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.pred-item label { display: block; font-size: 10px; color: var(--text2); margin-bottom: 5px; }
+.pred-item input {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 7px 10px; color: var(--accent);
+  font-family: var(--mono); font-size: 15px; font-weight: 500; outline: none;
+  transition: border-color .15s;
+}
+.pred-item input:focus { border-color: var(--accent); }
+
+textarea.modal-input { min-height: 70px; resize: vertical; line-height: 1.6; }
+
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* ── NEW TASK MODAL ── */
+.new-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 440px; max-width: 95vw;
+  padding: 24px;
+}
+
+/* ── STATS BAR ── */
+.stats-bar {
+  height: 36px; flex-shrink: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 24px;
+}
+.stat-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+.stat-val { font-family: var(--mono); font-weight: 500; color: var(--text); }
+.stat-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── LOGIN PAGE ── */
+#login-page {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 0;
+}
+.login-bg-glow {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+}
+.login-bg-glow::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(200,242,100,.07) 0%, transparent 70%);
+  top: -100px; left: 50%; transform: translateX(-50%);
+  border-radius: 50%;
+}
+.login-bg-glow::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(155,135,245,.05) 0%, transparent 70%);
+  bottom: -80px; right: 10%;
+  border-radius: 50%;
+}
+.login-card {
+  position: relative; z-index: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 40px 44px;
+  width: 400px; max-width: 95vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  animation: slideUp .35s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(28px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1); }
+}
+.login-logo {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--accent); letter-spacing: .12em;
+  margin-bottom: 6px;
+}
+.login-title {
+  font-size: 24px; font-weight: 700;
+  letter-spacing: -.03em; color: var(--text);
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 13px; color: var(--text2);
+  margin-bottom: 32px; line-height: 1.5;
+}
+.login-role-tabs {
+  display: flex;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px; gap: 4px;
+  margin-bottom: 26px;
+}
+.login-role-tab {
+  flex: 1; padding: 9px 0;
+  border: none; background: none;
+  border-radius: 7px;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  color: var(--text2); cursor: pointer;
+  transition: all .2s;
+}
+.login-role-tab.active {
+  background: var(--accent); color: #0e0e10;
+}
+.login-role-tab:not(.active):hover {
+  color: var(--text); background: var(--bg4);
+}
+.login-field { margin-bottom: 16px; }
+.login-label {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text3); margin-bottom: 7px;
+  display: block;
+}
+.login-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: var(--font); font-size: 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.login-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200,242,100,.1);
+}
+.login-input::placeholder { color: var(--text3); }
+.login-hint {
+  margin-top: 10px; padding: 10px 12px;
+  background: rgba(200,242,100,.05);
+  border: 1px solid rgba(200,242,100,.12);
+  border-radius: 8px;
+  font-size: 11px; color: var(--text2);
+  line-height: 1.6;
+}
+.login-hint strong { color: var(--accent); font-family: var(--mono); }
+.login-error {
+  margin-top: 12px; padding: 10px 12px;
+  background: rgba(242,82,82,.08);
+  border: 1px solid rgba(242,82,82,.2);
+  border-radius: 8px;
+  font-size: 12px; color: var(--red);
+  display: none;
+}
+.login-error.show { display: block; }
+.login-btn {
+  width: 100%; padding: 13px;
+  margin-top: 20px;
+  background: var(--accent); color: #0e0e10;
+  border: none; border-radius: 8px;
+  font-family: var(--font); font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  letter-spacing: -.01em;
+}
+.login-btn:hover {
+  background: var(--accent2);
+  box-shadow: 0 4px 20px rgba(200,242,100,.3);
+}
+.login-btn:active { transform: scale(.98); }
+.login-btn.loading { opacity: .6; pointer-events: none; }
+.login-footer {
+  margin-top: 28px; text-align: center;
+  font-size: 11px; color: var(--text3);
+}
+.login-user-badge {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+.login-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.login-user-info { flex: 1; }
+.login-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.login-user-role { font-size: 10px; color: var(--text2); margin-top: 1px; }
+
+/* topbar user zone */
+.topbar-user {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: 8px;
+}
+.topbar-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; flex-shrink: 0;
+}
+.topbar-username { font-size: 12px; font-weight: 500; color: var(--text2); }
+.topbar-logout {
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: none;
+  font-family: var(--font); font-size: 11px; color: var(--text3);
+  cursor: pointer; transition: all .15s;
+}
+.topbar-logout:hover { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-bg-glow"></div>
+  <div class="login-card">
+    <div class="login-logo">EDITOR OS</div>
+    <div class="login-title">Chào mừng trở lại</div>
+    <div class="login-sub">Đăng nhập để vào Pipeline của team</div>
+
+    <div class="login-role-tabs">
+      <button class="login-role-tab active" id="tab-leader" onclick="selectLoginRole('leader')">👑 Leader</button>
+      <button class="login-role-tab" id="tab-member" onclick="selectLoginRole('member')">🎬 Member</button>
+    </div>
+
+    <div id="login-badge">
+      <!-- badge hiển thị user ứng với role -->
+    </div>
+
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" id="login-email" type="email" placeholder="email@gmail.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Mật khẩu</label>
+      <input class="login-input" id="login-pw" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <div class="login-hint">
+      Demo — <strong>leader@gmail.com</strong> hoặc <strong>member@gmail.com</strong> · mật khẩu: <strong>123456</strong>
+    </div>
+
+    <div class="login-error" id="login-error">Email hoặc mật khẩu không đúng. Vui lòng thử lại.</div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Đăng nhập →</button>
+
+    <div class="login-footer">Editor Pipeline · Internal Tool</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">EDITOR OS</div>
+  <div class="divider"></div>
+  <div class="topbar-title">Pipeline</div>
+
+  <div class="topbar-user" id="topbar-user">
+    <div class="topbar-avatar" id="topbar-avatar"></div>
+    <span class="topbar-username" id="topbar-username"></span>
+    <button class="topbar-logout" onclick="doLogout()">Đăng xuất</button>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <span style="font-size:11px;color:var(--text3)">Lọc:</span>
+    <button class="filter-btn active" onclick="setFilter(this,'all')">Tất cả</button>
+    <button class="filter-btn" onclick="setFilter(this,'ha')">Hà</button>
+    <button class="filter-btn" onclick="setFilter(this,'tuan')">Tuấn</button>
+    <button class="filter-btn" onclick="setFilter(this,'minh')">Minh</button>
+    <button class="filter-btn" onclick="setFilter(this,'duy')">Duy</button>
+    <button class="filter-btn" onclick="setFilter(this,'linh')">Linh</button>
+  </div>
+
+  <div class="legend" id="legend-row">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Trễ hạn</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Sắp hạn</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>Đúng hạn</div>
+  </div>
+
+  <button class="btn btn-accent" style="margin-left:8px" onclick="openNewModal()">+ Task mới</button>
+</div>
+
+<!-- BOARD -->
+<div class="board-wrap" id="board"></div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-dot" style="background:var(--accent)"></div>Tổng task: <span class="stat-val" id="st-total">0</span></div>
+  <div class="stat-item"><div class="stat-dot" style="background:var(--red)"></div>Trễ hạn: <span class="stat-val" id="st-late">0</span></div>
+  <div class="stat-item"><div class="stat-dot" style="background:var(--teal)"></div>Checkpoint trung bình: <span class="stat-val" id="st-cp">0%</span></div>
+  <div class="stat-item" style="margin-left:auto;font-size:11px;color:var(--text3)">Kéo thả để chuyển bước · Bấm để xem SOP</div>
+</div>
+
+<!-- TASK DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="closeDetailOnOverlay(event)">
+  <div class="modal" id="modal-inner">
+    <div class="modal-header">
+      <div class="modal-title" id="m-title">—</div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Thông tin</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Editor</div>
+          <div style="font-size:13px;font-weight:500" id="m-editor">—</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Deadline</div>
+          <div style="font-size:13px;font-weight:500" id="m-deadline">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">SOP Checklist — <span id="m-step-label">—</span></div>
+      <div class="sop-checklist" id="m-checklist"></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Dự đoán performance</div>
+      <div class="prediction-grid">
+        <div class="pred-item"><label>Retention (%)</label><input type="number" id="m-ret" placeholder="0"></div>
+        <div class="pred-item"><label>CTR (%)</label><input type="number" id="m-ctr" placeholder="0" step="0.1"></div>
+        <div class="pred-item"><label>Drop point (giây)</label><input type="number" id="m-drop" placeholder="0"></div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Ghi chú / bài học</div>
+      <textarea class="modal-input" id="m-note" placeholder="Điều mình thử mới, điều mình băn khoăn, quyết định quan trọng..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDetail()">Đóng</button>
+      <button class="btn btn-accent" onclick="saveDetail()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW TASK MODAL -->
+<div class="modal-overlay" id="new-modal" onclick="closeNewOnOverlay(event)">
+  <div class="new-modal">
+    <div class="modal-header">
+      <div class="modal-title">Tạo task mới</div>
+      <button class="modal-close" onclick="closeNewModal()">✕</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Tên video / task</div>
+      <input class="modal-input" id="new-title" placeholder="VD: EP.50 · Drama — Tập cuối">
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Giao cho</div>
+      <select class="modal-input" id="new-editor" style="cursor:pointer">
+        <option value="ha">Hà Nguyễn</option>
+        <option value="tuan">Tuấn Trần</option>
+        <option value="minh">Minh Lê</option>
+        <option value="duy">Duy Hoàng</option>
+        <option value="linh">Linh Phạm</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="modal-section">
+        <div class="modal-label">Format</div>
+        <select class="modal-input" id="new-format" style="cursor:pointer">
+          <option>Drama</option>
+          <option>Vlog</option>
+          <option>Tutorial</option>
+          <option>Short</option>
+        </select>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label">Deadline</div>
+        <input class="modal-input" id="new-deadline" type="text" placeholder="VD: T6 02/05">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeNewModal()">Huỷ</button>
+      <button class="btn btn-accent" onclick="createTask()">Tạo task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   MOCK AUTH
+═══════════════════════════════════════════ */
+const MOCK_USERS = [
+  { email: 'leader@gmail.com', password: '123456', role: 'leader', name: 'Leader', initials: 'LD', color: '#c8f264', bg: 'rgba(200,242,100,.15)' },
+  { email: 'member@gmail.com', password: '123456', role: 'member', name: 'Hà Nguyễn', initials: 'HN', color: '#3ecfb2', bg: 'rgba(62,207,178,.15)' },
+];
+
+let loggedInUser = null;
+let selectedLoginRole = 'leader';
+
+const ROLE_BADGES = {
+  leader: { email: 'leader@gmail.com', name: 'Leader Account', initials: 'LD', color: '#c8f264', bg: 'rgba(200,242,100,.15)', roleLabel: 'Toàn quyền · Xem tất cả editor' },
+  member: { email: 'member@gmail.com', name: 'Hà Nguyễn',      initials: 'HN', color: '#3ecfb2', bg: 'rgba(62,207,178,.15)', roleLabel: 'Xem task cá nhân' },
+};
+
+function selectLoginRole(role) {
+  selectedLoginRole = role;
+  document.getElementById('tab-leader').classList.toggle('active', role === 'leader');
+  document.getElementById('tab-member').classList.toggle('active', role === 'member');
+  updateLoginBadge();
+  // Prefill email
+  document.getElementById('login-email').value = ROLE_BADGES[role].email;
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').classList.remove('show');
+}
+
+function updateLoginBadge() {
+  const b = ROLE_BADGES[selectedLoginRole];
+  document.getElementById('login-badge').innerHTML = `
+    <div class="login-user-badge">
+      <div class="login-user-avatar" style="background:${b.bg};color:${b.color}">${b.initials}</div>
+      <div class="login-user-info">
+        <div class="login-user-name">${b.name}</div>
+        <div class="login-user-role">${b.roleLabel}</div>
+      </div>
+    </div>
+  `;
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('login-pw').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-error');
+
+  btn.classList.add('loading');
+  btn.textContent = 'Đang đăng nhập...';
+
+  setTimeout(() => {
+    const user = MOCK_USERS.find(u => u.email === email && u.password === pw);
+    btn.classList.remove('loading');
+    btn.textContent = 'Đăng nhập →';
+    if (!user) {
+      err.classList.add('show');
+      document.getElementById('login-pw').value = '';
+      document.getElementById('login-pw').focus();
+      return;
+    }
+    err.classList.remove('show');
+    loggedInUser = user;
+    enterApp(user);
+  }, 600);
+}
+
+function enterApp(user) {
+  const loginPage = document.getElementById('login-page');
+  loginPage.style.animation = 'fadeOut .3s ease forwards';
+  loginPage.style.animationFillMode = 'forwards';
+
+  // Add fadeOut keyframe dynamically
+  if (!document.getElementById('fade-out-style')) {
+    const s = document.createElement('style');
+    s.id = 'fade-out-style';
+    s.textContent = '@keyframes fadeOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(.97)} }';
+    document.head.appendChild(s);
+  }
+
+  setTimeout(() => {
+    loginPage.style.display = 'none';
+    // Setup topbar user
+    const av = document.getElementById('topbar-avatar');
+    av.textContent = user.initials;
+    av.style.background = user.bg;
+    av.style.color = user.color;
+    document.getElementById('topbar-username').textContent = user.name;
+    // Set role & render
+    currentRole = user.role;
+    // If member, filter to their own editor key
+    if (user.role === 'member') {
+      currentMemberEditor = 'ha'; // map member@gmail.com → ha
+    }
+    render();
+  }, 320);
+}
+
+function doLogout() {
+  loggedInUser = null;
+  currentRole = 'leader';
+  currentFilter = 'all';
+  const loginPage = document.getElementById('login-page');
+  loginPage.style.animation = '';
+  loginPage.style.display = '';
+  // Reset animation
+  loginPage.style.animation = 'slideUpLogin .35s cubic-bezier(.22,.68,0,1.2)';
+  if (!document.getElementById('login-anim-style')) {
+    const s = document.createElement('style');
+    s.id = 'login-anim-style';
+    s.textContent = '@keyframes slideUpLogin { from{opacity:0} to{opacity:1} }';
+    document.head.appendChild(s);
+  }
+  // Reset form
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').classList.remove('show');
+  selectLoginRole('leader');
+}
+
+/* ─── init login badge on load ─── */
+window.addEventListener('DOMContentLoaded', () => {
+  updateLoginBadge();
+  document.getElementById('login-email').value = MOCK_USERS[0].email;
+});
+
+let currentMemberEditor = 'ha'; // default member editor key
+
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const STEPS = [
+  {
+    id: 'receive', name: 'Nhận task', color: '#5ba4f5',
+    sop: [
+      { text: 'Đọc brief và xem toàn bộ footage một lần', mindset: 'Không hỏi "cắt bao nhiêu phút" — hỏi "khán giả cần nghe gì nhất"' },
+      { text: 'Xác định khán giả mục tiêu và hook tiềm năng', mindset: 'Xem mình như người kể câu chuyện, không phải người ghép cảnh' },
+      { text: 'Ghi note: cấu trúc cảm xúc dự kiến của video', mindset: null },
+      { text: 'Tự trả lời: "Khán giả 30 giây đầu nhận được gì?"', mindset: 'Brief là điểm bắt đầu, không phải giới hạn' },
+    ]
+  },
+  {
+    id: 'rough', name: 'Cắt thô', color: '#9b87f5',
+    sop: [
+      { text: 'Chọn cảnh theo cảm xúc, không theo thứ tự thời gian', mindset: 'Tại mỗi cut: "Cảnh này phục vụ khán giả hay phục vụ mình?"' },
+      { text: 'Xây hook 15–30 giây đầu trước, phần còn lại sau', mindset: null },
+      { text: 'Xem lại bản cắt thô theo góc nhìn khán giả lần đầu', mindset: 'Cắt thô là bản thảo — không cần hoàn hảo, cần đúng hướng' },
+      { text: 'Đánh dấu những điểm chưa chắc — không bỏ qua', mindset: 'Nếu thấy đoạn dở, đề xuất xử lý khác — không im lặng chấp nhận' },
+    ]
+  },
+  {
+    id: 'post', name: 'Hậu kỳ', color: '#f5a623',
+    sop: [
+      { text: 'Color grade, âm thanh, transition, motion graphics', mindset: 'Kỹ thuật là phương tiện — nếu hiệu ứng không làm video tốt hơn, bỏ đi' },
+      { text: 'Mỗi quyết định kỹ thuật phải có lý do về cảm xúc', mindset: null },
+      { text: 'Xem lại toàn bộ một lần trước khi nộp', mindset: 'Không nộp video mà chưa xem lại lần cuối bằng tai nghe' },
+      { text: 'Ghi lại 1 điều mới mình thử trong video này', mindset: 'Mỗi video là cơ hội thử một điều mới dù nhỏ' },
+    ]
+  },
+  {
+    id: 'qc', name: 'QC & Xuất', color: '#f25252',
+    sop: [
+      { text: 'Nộp file kèm ghi chú: điểm mạnh và điểm băn khoăn', mindset: null },
+      { text: 'Peer review: 1 câu hỏi — "Khán giả drop ở đoạn nào?"', mindset: 'Feedback tốt là câu hỏi, không phải chỉ dẫn' },
+      { text: 'Nếu có revision: tự quyết định sửa thế nào', mindset: 'Nếu giải thích được quyết định của mình → quyết định hợp lệ' },
+      { text: 'Tối đa 1 vòng revision trước khi xuất bản', mindset: null },
+    ]
+  },
+  {
+    id: 'upload', name: 'Upload & Review', color: '#3ecfb2',
+    sop: [
+      { text: 'Upload lên YouTube / platform theo lịch', mindset: null },
+      { text: 'Sau 48–72h: xem retention curve và CTR thực tế', mindset: 'Data phán xét quyết định, không phán xét con người' },
+      { text: 'Đối chiếu với dự đoán đã ghi ở bước Nhận task', mindset: null },
+      { text: 'Ghi vào knowledge base: 1 đúng, 1 sai, 1 thử khác lần sau', mindset: 'Chia sẻ bài học tệ quan trọng hơn chia sẻ thành công' },
+    ]
+  }
+];
+
+const EDITORS = {
+  ha:   { name: 'Hà Nguyễn',  initials: 'HN', color: '#3ecfb2', bg: 'rgba(62,207,178,.15)' },
+  tuan: { name: 'Tuấn Trần',  initials: 'TT', color: '#9b87f5', bg: 'rgba(155,135,245,.15)' },
+  minh: { name: 'Minh Lê',    initials: 'ML', color: '#f5a623', bg: 'rgba(245,166,35,.15)' },
+  duy:  { name: 'Duy Hoàng',  initials: 'DH', color: '#f25252', bg: 'rgba(242,82,82,.15)' },
+  linh: { name: 'Linh Phạm',  initials: 'LP', color: '#5ba4f5', bg: 'rgba(91,164,245,.15)' },
+};
+
+let tasks = [
+  { id:'t1', title:'EP.47 · Drama — Tập đỉnh điểm', step:'post', editor:'ha', format:'Drama', deadline:'T6 02/05', urgent:false, soon:false, cp:[true,true,false,false], note:'', ret:'', ctr:'', drop:'' },
+  { id:'t2', title:'EP.46 · Vlog hậu trường', step:'qc', editor:'tuan', format:'Vlog', deadline:'T5 01/05', urgent:false, soon:true, cp:[true,true,true,false], note:'Hook 45 giây test', ret:'55', ctr:'7.5', drop:'180' },
+  { id:'t3', title:'EP.45 · Tutorial Premiere Pro', step:'rough', editor:'minh', format:'Tutorial', deadline:'T3 29/04', urgent:true, soon:false, cp:[true,false,false,false], note:'', ret:'', ctr:'', drop:'' },
+  { id:'t4', title:'EP.44 · Drama — Cảnh hòa giải', step:'qc', editor:'duy', format:'Drama', deadline:'T3 29/04', urgent:true, soon:false, cp:[true,true,true,false], note:'Revision 3 — cần xem lại', ret:'42', ctr:'5.8', drop:'120' },
+  { id:'t5', title:'EP.43 · Short clip viral', step:'upload', editor:'ha', format:'Short', deadline:'Hoàn thành', urgent:false, soon:false, cp:[true,true,true,true], note:'Retention 61% — đúng dự đoán!', ret:'61', ctr:'8.5', drop:'45' },
+  { id:'t6', title:'EP.42 · Vlog daily routine', step:'receive', editor:'linh', format:'Vlog', deadline:'T7 03/05', urgent:false, soon:false, cp:[false,false,false,false], note:'', ret:'', ctr:'', drop:'' },
+  { id:'t7', title:'EP.48 · Tutorial After Effects', step:'receive', editor:'tuan', format:'Tutorial', deadline:'CN 04/05', urgent:false, soon:false, cp:[false,false,false,false], note:'', ret:'', ctr:'', drop:'' },
+  { id:'t8', title:'EP.41 · Drama — Mùa 2 mở đầu', step:'upload', editor:'linh', format:'Drama', deadline:'Hoàn thành', urgent:false, soon:false, cp:[true,true,true,true], note:'CTR 7.8% — cao hơn dự đoán', ret:'52', ctr:'7.8', drop:'210' },
+];
+
+let currentRole = 'leader';
+let currentFilter = 'all';
+let draggingId = null;
+let openTaskId = null;
+
+/* ═══════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════ */
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  const visibleTasks = tasks.filter(t => {
+    if (currentRole === 'member') return t.editor === currentMemberEditor;
+    if (currentFilter !== 'all') return t.editor === currentFilter;
+    return true;
+  });
+
+  STEPS.forEach(step => {
+    const stepTasks = visibleTasks.filter(t => t.step === step.id);
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.dataset.step = step.id;
+
+    // Head
+    col.innerHTML = `
+      <div class="col-head">
+        <div class="col-indicator" style="background:${step.color}"></div>
+        <div class="col-name">${step.name}</div>
+        <div class="col-count">${stepTasks.length}</div>
+      </div>
+      <div class="col-sop">
+        <div class="sop-title">SOP checklist</div>
+        <div class="sop-checks">
+          ${step.sop.map(s=>`<div class="sop-check">${s.text}</div>`).join('')}
+        </div>
+      </div>
+    `;
+
+    // Cards container
+    const cardsEl = document.createElement('div');
+    cardsEl.className = 'col-cards';
+    cardsEl.dataset.step = step.id;
+
+    stepTasks.forEach(task => {
+      cardsEl.appendChild(makeCard(task, step));
+    });
+
+    setupDropZone(cardsEl);
+    col.appendChild(cardsEl);
+
+    // Add button
+    if (currentRole === 'leader') {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-task-btn';
+      addBtn.innerHTML = `<span>+</span> Thêm task`;
+      addBtn.onclick = () => { document.getElementById('new-modal').classList.add('open'); };
+      col.appendChild(addBtn);
+    }
+
+    board.appendChild(col);
+  });
+
+  updateStats(visibleTasks);
+}
+
+function makeCard(task, step) {
+  const ed = EDITORS[task.editor];
+  const cpDone = task.cp.filter(Boolean).length;
+  const cpTotal = task.cp.length;
+  const cpPct = Math.round((cpDone / cpTotal) * 100);
+
+  const card = document.createElement('div');
+  card.className = 'task';
+  card.dataset.id = task.id;
+  card.draggable = true;
+
+  // flag
+  let flagColor = '#3ecfb2';
+  if (task.urgent) flagColor = '#f25252';
+  else if (task.soon) flagColor = '#f5a623';
+
+  const formatTag = { Drama:'tag-purple', Vlog:'tag-blue', Tutorial:'tag-teal', Short:'tag-pink' }[task.format] || 'tag-gray';
+  const deadlineClass = task.urgent ? 'urgent' : task.soon ? 'soon' : '';
+
+  card.innerHTML = `
+    <div class="flag-dot" style="background:${flagColor}"></div>
+    <div class="task-top">
+      <div class="task-title">${task.title}</div>
+    </div>
+    <div class="task-meta">
+      <span class="tag ${formatTag}">${task.format}</span>
+      ${cpDone === cpTotal ? '<span class="tag tag-accent">✓ SOP</span>' : ''}
+    </div>
+    <div class="task-footer">
+      <div class="task-avatar" style="background:${ed.bg};color:${ed.color}">${ed.initials}</div>
+      <div class="task-editor">${currentRole==='leader' ? ed.name : 'Tôi'}</div>
+      <div class="task-deadline ${deadlineClass}">${task.deadline}</div>
+    </div>
+    <div class="cp-bar">
+      <div class="cp-bar-label">
+        <div class="cp-bar-text">SOP ${cpDone}/${cpTotal}</div>
+        <div class="cp-bar-val">${cpPct}%</div>
+      </div>
+      <div class="cp-bar-bg">
+        <div class="cp-bar-fill" style="width:${cpPct}%;background:${cpPct===100?'#c8f264':cpPct>50?'#f5a623':'#f25252'}"></div>
+      </div>
+    </div>
+  `;
+
+  // drag
+  card.addEventListener('dragstart', e => {
+    draggingId = task.id;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.col-cards').forEach(z => z.classList.remove('drag-over'));
+  });
+
+  // click → open detail
+  card.addEventListener('click', () => openDetail(task.id));
+
+  return card;
+}
+
+function setupDropZone(el) {
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('dragleave', e => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (!draggingId) return;
+    const newStep = el.dataset.step;
+    const task = tasks.find(t => t.id === draggingId);
+    if (task && task.step !== newStep) {
+      task.step = newStep;
+      // reset cp when moved back
+      if (newStep !== 'upload') task.cp = [false,false,false,false];
+    }
+    draggingId = null;
+    render();
+  });
+}
+
+function updateStats(visible) {
+  const late = visible.filter(t => t.urgent).length;
+  const cpAvg = visible.length
+    ? Math.round(visible.reduce((s,t) => s + t.cp.filter(Boolean).length/t.cp.length, 0) / visible.length * 100)
+    : 0;
+  document.getElementById('st-total').textContent = visible.length;
+  document.getElementById('st-late').textContent = late;
+  document.getElementById('st-cp').textContent = cpAvg + '%';
+}
+
+/* ═══════════════════════════════════════════
+   DETAIL MODAL
+═══════════════════════════════════════════ */
+function openDetail(id) {
+  openTaskId = id;
+  const task = tasks.find(t => t.id === id);
+  const step = STEPS.find(s => s.id === task.step);
+  const ed = EDITORS[task.editor];
+
+  document.getElementById('m-title').textContent = task.title;
+  document.getElementById('m-editor').textContent = ed.name;
+  document.getElementById('m-deadline').textContent = task.deadline;
+  document.getElementById('m-step-label').textContent = step.name;
+  document.getElementById('m-ret').value = task.ret;
+  document.getElementById('m-ctr').value = task.ctr;
+  document.getElementById('m-drop').value = task.drop;
+  document.getElementById('m-note').value = task.note;
+
+  const list = document.getElementById('m-checklist');
+  list.innerHTML = '';
+  step.sop.forEach((s, i) => {
+    const item = document.createElement('div');
+    item.className = 'sop-item' + (task.cp[i] ? ' done' : '');
+    item.innerHTML = `
+      <div class="sop-checkbox"></div>
+      <div>
+        <div class="sop-text">${s.text}</div>
+        ${s.mindset ? `<div class="sop-mindset">→ ${s.mindset}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => {
+      task.cp[i] = !task.cp[i];
+      item.classList.toggle('done', task.cp[i]);
+      item.querySelector('.sop-checkbox').textContent = task.cp[i] ? '' : '';
+      render();
+    });
+    list.appendChild(item);
+  });
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function saveDetail() {
+  const task = tasks.find(t => t.id === openTaskId);
+  if (!task) return;
+  task.ret = document.getElementById('m-ret').value;
+  task.ctr = document.getElementById('m-ctr').value;
+  task.drop = document.getElementById('m-drop').value;
+  task.note = document.getElementById('m-note').value;
+  closeDetail();
+  render();
+}
+
+function closeDetail() { document.getElementById('detail-modal').classList.remove('open'); }
+function closeDetailOnOverlay(e) { if (e.target.id === 'detail-modal') closeDetail(); }
+
+/* ═══════════════════════════════════════════
+   NEW TASK MODAL
+═══════════════════════════════════════════ */
+function openNewModal() { document.getElementById('new-modal').classList.add('open'); }
+function closeNewModal() { document.getElementById('new-modal').classList.remove('open'); }
+function closeNewOnOverlay(e) { if (e.target.id === 'new-modal') closeNewModal(); }
+
+function createTask() {
+  const title = document.getElementById('new-title').value.trim();
+  if (!title) { document.getElementById('new-title').focus(); return; }
+  const editor = document.getElementById('new-editor').value;
+  const format = document.getElementById('new-format').value;
+  const deadline = document.getElementById('new-deadline').value || 'Chưa đặt';
+  tasks.unshift({
+    id: 't' + Date.now(),
+    title, step: 'receive', editor, format, deadline,
+    urgent: false, soon: false,
+    cp: [false,false,false,false],
+    note: '', ret: '', ctr: '', drop: ''
+  });
+  closeNewModal();
+  document.getElementById('new-title').value = '';
+  document.getElementById('new-deadline').value = '';
+  render();
+}
+
+/* ═══════════════════════════════════════════
+   ROLE & FILTER
+═══════════════════════════════════════════ */
+function setRole(role) {
+  currentRole = role;
+  document.getElementById('rb-leader').classList.toggle('active', role==='leader');
+  document.getElementById('rb-member').classList.toggle('active', role==='member');
+  document.getElementById('filter-row').style.display = role==='leader' ? 'flex' : 'none';
+  document.getElementById('legend-row').style.display = role==='leader' ? 'flex' : 'none';
+  currentFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  render();
+}
+
+function setFilter(btn, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+/* init */
+render();
+</script>
+</body>
+</html>
